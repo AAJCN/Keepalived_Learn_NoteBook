@@ -1,0 +1,6 @@
+vrrp的主体从
+start_vrrp()开始
+	step1：global_data = alloc_global_data();
+		申请data内存，并初始化set_default_values，
+	step2： vrrp_data = alloc_vrrp_data()
+		申请vrrp_data结构体,都是list。

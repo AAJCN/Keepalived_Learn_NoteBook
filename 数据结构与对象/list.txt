@@ -1,0 +1,67 @@
+keepalived/lib/list.h
+
+List实现的效用宏 
+/* utility macro */
+#define ELEMENT_NEXT(E)		((E) = (E)->next)
+#define ELEMENT_DATA(E)		((E)->data)
+#define LIST_HEAD(L)		((L)->head)
+#define LIST_TAIL_DATA(L)	((L)->tail->data)
+#define LIST_ISEMPTY(L)		((L) == NULL || ((L)->head == NULL && (L)->tail == NULL))
+#define LIST_SIZE(V)		((V)->count)
+
+
+原型
+/* Prototypes */
+extern list alloc_list(void (*free_func) (void *), void (*dump_func) (void *));
+为list申请内存空间,采用MALLOC实现；
+1. #define MALLOC(n)    (zalloc(n))
+先看简单的，这个定义的zalloc只是假如了一个全局变量，记录总共申请的内存。
+unsigned long mem_allocated;	/* Total memory used in Bytes */
+void * zalloc(unsigned long size)
+{
+	void *mem;
+	if ((mem = malloc(size))) {
+		memset(mem, 0, size);
+		mem_allocated += size;
+	}
+	return mem;
+}
+
+
+
+如果开启了debug模式 则会采用第二种宏定义
+2. #define MALLOC(n)    ( keepalived_malloc((n),(__FILE__), (char *)(__FUNCTION__), (__LINE__)) )
+
+ANSI C标准中有几个标准预定义宏（也是常用的）：
+__LINE__：在源代码中插入当前源代码行号；
+__FILE__：在源文件中插入当前源文件名；
+__DATE__：在源文件中插入当前的编译日期
+__TIME__：在源文件中插入当前编译时间；
+__STDC__：当要求程序严格遵循ANSI C标准时该标识被赋值为1；
+__cplusplus：当编写C++程序时该标识符被定义。
+
+
+keepalived_malloc函数中有一个KeepAlived memory management。
+每次申请的时候都会产生一个新的结构体，如下，记录申请的内存的类型，代码行数，申请的函数，文件，指向内存的指针，申请长度等
+typedef struct {
+	int type;
+	int line;
+	char *func;
+	char *file;
+	void *ptr;
+	unsigned long size;
+	long csum;
+} MEMCHECK;
+
+
+
+extern void free_list(list l);
+extern void free_list_elements(list l);
+extern void free_list_element(list l, element e);
+extern void *list_element(list l, int num);
+extern void dump_list(list l);
+extern void list_add(list l, void *data);
+extern void list_del(list l, void *data);
+extern list alloc_mlist(void (*free_func) (void *), void (*dump_func) (void *), int size);
+extern void dump_mlist(list l, int size);
+extern void free_mlist(list l, int size);
